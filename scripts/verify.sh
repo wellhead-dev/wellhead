@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+test -z "$(gofmt -l .)"
+go vet ./...
+go build ./...
+go test -count=1 ./...
+golangci-lint run ./...
+helm lint deploy/charts/wellhead
+helm lint deploy/charts/wellhead --set admissionPolicy.validationActions='{Deny}' --set kyverno.enabled=true --set 'storeNames={vault}'
+helm template wellhead deploy/charts/wellhead >/dev/null
+bash scripts/check-policy-offline.sh
+actionlint

@@ -1,0 +1,44 @@
+version: 2
+project_name: wellhead
+before:
+  hooks:
+    - go mod download
+builds:
+  - id: wellhead
+    main: ./cmd/wellhead
+    binary: wellhead
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+archives:
+  - id: wellhead
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - NOTICE
+      - README.md
+checksum:
+  name_template: checksums.txt
+sboms:
+  - artifacts: archive
+signs:
+  - cmd: cosign
+    signature: "${artifact}.sigstore.json"
+    args: ["sign-blob", "--bundle=${signature}", "${artifact}", "--yes"]
+    artifacts: checksum
+    output: true
+changelog:
+  disable: true
+release:
+  github:
+    owner: wellhead-dev
+    name: wellhead
+  mode: keep-existing
+  prerelease: auto

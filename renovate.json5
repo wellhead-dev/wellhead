@@ -1,0 +1,37 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'github>webgrip/renovate-config:profile-library#v1.18.0',
+    'github>webgrip/renovate-config:golang#v1.18.0',
+  ],
+  customManagers: [
+    {
+      description: 'Versions pinned in workflow env with a `# renovate:` line above them, such as ESO_VERSION.',
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/[^/]+\\.ya?ml$/'],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\s*\\n\\s*[A-Z0-9_]+:\\s*["\']?(?<currentValue>[^"\'\\s]+)',
+      ],
+    },
+    {
+      description: 'The kind node images of the admission matrix, pinned by digest.',
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/ci\\.ya?ml$/'],
+      matchStrings: ['node-image: (?<depName>kindest/node):(?<currentValue>v[0-9.]+)@(?<currentDigest>sha256:[0-9a-f]{64})'],
+      datasourceTemplate: 'docker',
+    },
+  ],
+  packageRules: [
+    {
+      description: 'For Go modules Renovate compares the go directive with each release\'s as exact versions, though both are minimums, and drops releases that declare another one. Minimal version selection already resolves the toolchain floor, and go mod tidy in the branch fails if a release needs a newer one.',
+      matchManagers: ['gomod'],
+      constraintsFiltering: 'none',
+    },
+    {
+      description: 'The admission matrix pins the oldest and the newest supported Kubernetes minor. Renovate keeps each on its own minor; moving a leg to another minor is a decision, not a bump.',
+      matchPackageNames: ['kindest/node'],
+      matchUpdateTypes: ['major', 'minor'],
+      enabled: false,
+    },
+  ],
+}

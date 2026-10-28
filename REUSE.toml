@@ -1,0 +1,16 @@
+version = 1
+SPDX-PackageName = "wellhead"
+SPDX-PackageSupplier = "The wellhead Authors"
+SPDX-PackageDownloadLocation = "https://github.com/wellhead-dev/wellhead"
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The wellhead Authors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["**/*.md", "docs/**/*.png", "docs/**/*.svg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The wellhead Authors"
+SPDX-License-Identifier = "CC-BY-4.0"

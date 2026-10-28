@@ -1,0 +1,5 @@
+/dist/
+/wellhead
+*.test
+*.out
+.env

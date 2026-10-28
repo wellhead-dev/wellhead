@@ -1,0 +1,20 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: preserve-generated
+  namespace: default
+  annotations:
+    wellhead.dev/origin: preserve
+    wellhead.dev/how: >-
+      An at-rest encryption key. Leave it empty to generate one; never change it afterwards,
+      or the data it encrypts is lost.
+    wellhead.dev/fields: encryption_key
+    wellhead.dev/generate: encryption_key
+    wellhead.dev/verify: none
+    wellhead.dev/rotate-on-compromise: "false"
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: preserve-generated }
+  dataFrom:
+    - extract: { key: apps/demo }

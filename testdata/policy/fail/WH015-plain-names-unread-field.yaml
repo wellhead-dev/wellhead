@@ -1,0 +1,16 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: plain-unknown
+  namespace: default
+  annotations:
+    wellhead.dev/origin: provided
+    wellhead.dev/how: Vendor console, API tokens, create a read-only token.
+    wellhead.dev/verify: none
+    wellhead.dev/plain: user
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: plain-unknown }
+  data:
+    - { secretKey: token, remoteRef: { key: apps/demo, property: token } }

@@ -1,0 +1,15 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: rolled-bootstrap
+  namespace: default
+  annotations:
+    wellhead.dev/origin: rolled
+    wellhead.dev/how: The first admin token from the vendor; a controller rotates it after that.
+    wellhead.dev/verify: x-vendor-admin
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: rolled-bootstrap }
+  data:
+    - { secretKey: token, remoteRef: { key: apps/demo, property: token } }

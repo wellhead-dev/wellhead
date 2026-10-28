@@ -1,0 +1,16 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: json-list
+  namespace: default
+  annotations:
+    wellhead.dev/origin: provided
+    wellhead.dev/how: Vendor console, API tokens, create a read-only token.
+    wellhead.dev/verify: none
+    wellhead.dev/fields: '["username", "password"]'
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: json-list }
+  dataFrom:
+    - extract: { key: apps/demo }

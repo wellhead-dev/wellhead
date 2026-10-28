@@ -1,0 +1,20 @@
+{{- if .Values.kyverno.enabled }}
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: {{ include "wellhead.name" . }}-externalsecret-origin
+  labels:
+    {{- include "wellhead.labels" . | nindent 4 }}
+spec:
+  validationActions:
+    {{- toYaml .Values.kyverno.validationActions | nindent 4 }}
+  evaluation:
+    background:
+      enabled: {{ .Values.kyverno.background }}
+  matchConstraints:
+    {{- include "wellhead.matchConstraints" . | nindent 4 }}
+  {{- with include "wellhead.matchConditions" . }}
+  {{- . | nindent 2 }}
+  {{- end }}
+  {{- include "wellhead.body" . | nindent 2 }}
+{{- end }}

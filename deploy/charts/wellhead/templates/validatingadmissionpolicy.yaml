@@ -1,0 +1,29 @@
+{{- if .Values.admissionPolicy.enabled }}
+{{- $actions := .Values.admissionPolicy.validationActions }}
+{{- $failure := .Values.admissionPolicy.failurePolicy | default (ternary "Fail" "Ignore" (has "Deny" $actions)) }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: {{ include "wellhead.name" . }}-externalsecret-origin
+  labels:
+    {{- include "wellhead.labels" . | nindent 4 }}
+spec:
+  failurePolicy: {{ $failure }}
+  matchConstraints:
+    {{- include "wellhead.matchConstraints" . | nindent 4 }}
+  {{- with include "wellhead.matchConditions" . }}
+  {{- . | nindent 2 }}
+  {{- end }}
+  {{- include "wellhead.body" . | nindent 2 }}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: {{ include "wellhead.name" . }}-externalsecret-origin
+  labels:
+    {{- include "wellhead.labels" . | nindent 4 }}
+spec:
+  policyName: {{ include "wellhead.name" . }}-externalsecret-origin
+  validationActions:
+    {{- toYaml $actions | nindent 4 }}
+{{- end }}

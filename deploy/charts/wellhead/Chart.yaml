@@ -1,0 +1,17 @@
+apiVersion: v2
+name: wellhead
+description: Admission policies that make every External Secrets Operator ExternalSecret declare where its value comes from.
+type: application
+version: 0.0.0
+appVersion: "0.0.0"
+kubeVersion: ">=1.30.0-0"
+home: https://github.com/wellhead-dev/wellhead
+sources:
+  - https://github.com/wellhead-dev/wellhead
+keywords:
+  - external-secrets
+  - validatingadmissionpolicy
+  - kyverno
+  - secrets
+annotations:
+  wellhead.dev/spec-version: v1alpha1

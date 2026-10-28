@@ -1,0 +1,13 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: no-origin
+  namespace: default
+  annotations:
+    example.com/owner: platform
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: no-origin }
+  data:
+    - { secretKey: token, remoteRef: { key: apps/demo, property: token } }

@@ -1,0 +1,22 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: provided-extract
+  namespace: default
+  annotations:
+    wellhead.dev/origin: provided
+    wellhead.dev/how: Vendor console, API tokens, create a read-only token.
+    wellhead.dev/docs: https://example.com/runbooks/vendor-token
+    wellhead.dev/fields: username password
+    wellhead.dev/plain: username
+    wellhead.dev/verify: http
+    wellhead.dev/verify.http.url: https://registry.example.com/v2/
+    wellhead.dev/verify.http.auth: basic:username:password
+    wellhead.dev/lifetime: 365d
+    wellhead.dev/rotate-on-compromise: "true"
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: provided-extract }
+  dataFrom:
+    - extract: { key: apps/demo }

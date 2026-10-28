@@ -1,0 +1,13 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: projected-shared
+  namespace: default
+  annotations:
+    wellhead.dev/origin: projected
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: projected-shared }
+  dataFrom:
+    - extract: { key: apps/demo }

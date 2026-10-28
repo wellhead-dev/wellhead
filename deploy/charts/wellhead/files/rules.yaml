@@ -1,0 +1,121 @@
+# The wellhead.dev/ annotation rules, spec v1alpha1 (docs/adrs/0001).
+# One source: the chart renders them into the admission policies, and
+# `wellhead lint` embeds and evaluates this file with the same CEL.
+specVersion: v1alpha1
+variables:
+  - name: ann
+    expression: "object.?metadata.?annotations.orValue({})"
+  - name: name
+    expression: "object.?metadata.?name.orValue('')"
+  - name: origin
+    expression: "variables.ann[?'wellhead.dev/origin'].orValue('')"
+  - name: person
+    expression: "variables.origin in ['provided', 'preserve', 'rolled']"
+  - name: verify
+    expression: "variables.ann[?'wellhead.dev/verify'].orValue('').split(' ').filter(k, k != '')"
+  - name: named
+    expression: "object.?spec.?data.orValue([]).map(d, d.?remoteRef.?property.orValue('')).filter(p, p != '')"
+  - name: fields
+    expression: "variables.ann[?'wellhead.dev/fields'].orValue('').split(' ').filter(f, f != '') + variables.named"
+  - name: plain
+    expression: "variables.ann[?'wellhead.dev/plain'].orValue('').split(' ').filter(f, f != '')"
+  - name: generate
+    expression: "variables.ann[?'wellhead.dev/generate'].orValue('').split(' ').filter(f, f != '')"
+  - name: extracts
+    expression: "object.?spec.?dataFrom.orValue([]).exists(d, has(d.extract))"
+validations:
+  - id: WH001
+    expression: "'wellhead.dev/origin' in variables.ann"
+    messageExpression: >-
+      'WH001: ExternalSecret ' + variables.name + ' does not say where its value comes from;
+      set wellhead.dev/origin to provided, preserve, rolled, minted or projected'
+  - id: WH002
+    expression: >-
+      !('wellhead.dev/origin' in variables.ann) ||
+      variables.origin in ['provided', 'preserve', 'rolled', 'minted', 'projected']
+    messageExpression: >-
+      'WH002: wellhead.dev/origin on ' + variables.name + ' is "' + variables.origin +
+      '"; use provided, preserve, rolled, minted or projected'
+  - id: WH003
+    expression: "!variables.person || variables.ann[?'wellhead.dev/how'].orValue('').trim() != ''"
+    messageExpression: >-
+      'WH003: ' + variables.name + ' has origin ' + variables.origin +
+      ', so a person enters it, but has no wellhead.dev/how saying where the value comes from'
+  - id: WH004
+    expression: "!variables.person || size(variables.verify) > 0"
+    messageExpression: >-
+      'WH004: ' + variables.name + ' has origin ' + variables.origin +
+      ', so a person enters it, but has no wellhead.dev/verify; name a check, or none as a reviewed exception'
+  - id: WH005
+    expression: >-
+      variables.verify.all(k, k in ['http', 'format', 'github-app', 'github-token', 'gitlab-token',
+      'slack-bot-token', 'cloudflare-token', 'none'] || k.startsWith('x-'))
+    messageExpression: >-
+      'WH005: wellhead.dev/verify on ' + variables.name + ' names unknown kinds: ' +
+      variables.verify.filter(k, !(k in ['http', 'format', 'github-app', 'github-token', 'gitlab-token',
+      'slack-bot-token', 'cloudflare-token', 'none']) && !k.startsWith('x-')).join(', ') +
+      '; an extension kind starts with x-'
+  - id: WH006
+    expression: "!('none' in variables.verify) || size(variables.verify) == 1"
+    messageExpression: >-
+      'WH006: wellhead.dev/verify on ' + variables.name + ' combines none with other checks'
+  - id: WH007
+    expression: >-
+      !variables.person || !variables.extracts ||
+      variables.ann[?'wellhead.dev/fields'].orValue('') != ''
+    messageExpression: >-
+      'WH007: ' + variables.name + ' reads a whole path with dataFrom.extract; list the field names
+      a person enters in wellhead.dev/fields'
+  - id: WH008
+    expression: >-
+      !('wellhead.dev/docs' in variables.ann) ||
+      variables.ann['wellhead.dev/docs'].matches('^https://[^ ]+$')
+    messageExpression: "'WH008: wellhead.dev/docs on ' + variables.name + ' is not an https URL'"
+  - id: WH009
+    expression: >-
+      !('wellhead.dev/lifetime' in variables.ann) ||
+      variables.ann['wellhead.dev/lifetime'].matches('^[1-9][0-9]*[hdw]$')
+    messageExpression: >-
+      'WH009: wellhead.dev/lifetime on ' + variables.name + ' is not a whole number of hours, days
+      or weeks such as 90d'
+  - id: WH010
+    expression: >-
+      !('wellhead.dev/expires' in variables.ann) ||
+      variables.ann['wellhead.dev/expires'].matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+    messageExpression: "'WH010: wellhead.dev/expires on ' + variables.name + ' is not a date such as 2027-01-31'"
+  - id: WH011
+    expression: >-
+      !('wellhead.dev/rotate-on-compromise' in variables.ann) ||
+      variables.ann['wellhead.dev/rotate-on-compromise'] in ['true', 'false']
+    messageExpression: "'WH011: wellhead.dev/rotate-on-compromise on ' + variables.name + ' is not true or false'"
+  - id: WH012
+    expression: >-
+      !(variables.origin == 'preserve' &&
+      variables.ann[?'wellhead.dev/rotate-on-compromise'].orValue('') == 'true')
+    messageExpression: >-
+      'WH012: ' + variables.name + ' is preserve, a value that is never regenerated, but says
+      rotate-on-compromise true'
+  - id: WH013
+    expression: >-
+      variables.ann.all(k, !k.startsWith('wellhead.dev/') || k in ['wellhead.dev/origin',
+      'wellhead.dev/how', 'wellhead.dev/docs', 'wellhead.dev/fields', 'wellhead.dev/plain',
+      'wellhead.dev/generate', 'wellhead.dev/verify', 'wellhead.dev/expires', 'wellhead.dev/lifetime',
+      'wellhead.dev/rotate-on-compromise'] || k.matches('^wellhead[.]dev/verify[.][a-z0-9-]+[.][A-Za-z0-9_.-]+$'))
+    messageExpression: >-
+      'WH013: ' + variables.name + ' carries unknown annotations: ' +
+      variables.ann.filter(k, k.startsWith('wellhead.dev/') && !(k in ['wellhead.dev/origin',
+      'wellhead.dev/how', 'wellhead.dev/docs', 'wellhead.dev/fields', 'wellhead.dev/plain',
+      'wellhead.dev/generate', 'wellhead.dev/verify', 'wellhead.dev/expires', 'wellhead.dev/lifetime',
+      'wellhead.dev/rotate-on-compromise']) && !k.matches('^wellhead[.]dev/verify[.][a-z0-9-]+[.][A-Za-z0-9_.-]+$')).join(', ')
+  - id: WH014
+    expression: >-
+      ['wellhead.dev/fields', 'wellhead.dev/plain', 'wellhead.dev/generate', 'wellhead.dev/verify'].all(k,
+      !(k in variables.ann) || variables.ann[k].matches('^[A-Za-z0-9_.-]+( [A-Za-z0-9_.-]+)*$'))
+    messageExpression: >-
+      'WH014: a list annotation on ' + variables.name + ' is not names separated by single spaces
+      (fields, plain, generate and verify are plain lists, not JSON or YAML)'
+  - id: WH015
+    expression: "(variables.plain + variables.generate).all(f, f in variables.fields)"
+    messageExpression: >-
+      'WH015: wellhead.dev/plain or wellhead.dev/generate on ' + variables.name + ' names fields
+      it does not read: ' + (variables.plain + variables.generate).filter(f, !(f in variables.fields)).join(', ')

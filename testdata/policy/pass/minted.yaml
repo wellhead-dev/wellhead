@@ -1,0 +1,13 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: minted-by-job
+  namespace: default
+  annotations:
+    wellhead.dev/origin: minted
+spec:
+  refreshInterval: "0"
+  secretStoreRef: { kind: ClusterSecretStore, name: vault }
+  target: { name: minted-by-job }
+  dataFrom:
+    - extract: { key: apps/demo }

@@ -1,0 +1,23 @@
+# Native ValidatingAdmissionPolicy and its binding, evaluated by the API server.
+admissionPolicy:
+  enabled: true
+  # Warn and Audit while an estate is annotating; Deny once every ExternalSecret carries the annotations.
+  validationActions: [Warn, Audit]
+  # Empty: Ignore while validationActions lacks Deny, Fail once it has it.
+  # Ignore keeps an evaluation error from turning into a rejected ExternalSecret.
+  failurePolicy: ""
+
+# Only ExternalSecrets whose spec.secretStoreRef.name is in this list are checked.
+# Empty checks every ExternalSecret.
+storeNames: []
+
+# Optional Kyverno ValidatingPolicy (policies.kyverno.io/v1) carrying the same rules,
+# for estates that want PolicyReports from Kyverno's background scan.
+# Kyverno also reports on the native policy; enable one of the two to avoid duplicate warnings.
+kyverno:
+  enabled: false
+  validationActions: [Audit]
+  background: true
+
+# Prefix for the names of the rendered objects; empty uses the release name.
+nameOverride: ""

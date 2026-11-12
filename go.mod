@@ -2,7 +2,7 @@ module github.com/wellhead-dev/wellhead
 
 go 1.26.0
 
-toolchain go1.27.3
+toolchain go1.27.4
 
 require (
 	github.com/google/cel-go v0.30.0
